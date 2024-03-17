@@ -1,0 +1,11 @@
+# application.yaml
+
+# Server configurations
+server:
+  port: 8082
+  servlet.contextPath: /access
+
+# Logging configurations
+logging:
+  level:
+    org.springframework: INFO
