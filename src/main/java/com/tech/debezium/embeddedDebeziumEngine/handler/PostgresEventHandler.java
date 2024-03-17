@@ -1,7 +1,6 @@
 package com.tech.debezium.embeddedDebeziumEngine.handler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.tech.debezium.embeddedDebeziumEngine.EmbeddedDebeziumEngineApplication;
 import com.tech.debezium.embeddedDebeziumEngine.model.ProductEvent;
 import io.debezium.data.Envelope;
 import io.debezium.engine.RecordChangeEvent;
@@ -16,14 +15,14 @@ import java.util.Optional;
 import java.util.Properties;
 
 import static io.debezium.data.Envelope.FieldName.OPERATION;
-import static jakarta.servlet.RequestDispatcher.ERROR_MESSAGE;
+
 
 public class PostgresEventHandler {
 
     private final KafkaProducer<String, String> kafkaProducer;
     private static final String TOPIC_NAME = "product_stream";
     private static final String ERROR_MESSAGE = "Exception occurred during event handling";
-    private final static String topic = "product_stream";
+
     private static final Logger logger = LoggerFactory.getLogger(PostgresEventHandler.class);
 
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -53,7 +52,7 @@ public class PostgresEventHandler {
 
     private Optional<ProductEvent> getProductEvent(SourceRecord event,Envelope.Operation op){
         final Struct value = (Struct) event.value();
-        final Struct key = (Struct) event.key();
+
         final Struct values = value.getStruct("after");
         if(values != null){
             String name = values.getString("name");
