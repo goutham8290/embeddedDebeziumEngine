@@ -1,8 +1,8 @@
 package com.tech.debezium.embeddedDebeziumEngine;
 
 
+import com.tech.debezium.embeddedDebeziumEngine.handler.PostgresEventHandler;
 import io.debezium.config.Configuration;
-import io.debezium.data.Envelope;
 import io.debezium.embedded.Connect;
 import io.debezium.engine.DebeziumEngine;
 import io.debezium.engine.RecordChangeEvent;
@@ -10,20 +10,17 @@ import io.debezium.engine.format.ChangeEventFormat;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringSerializer;
-import org.apache.kafka.connect.data.Struct;
 import org.apache.kafka.connect.source.SourceRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 
-import java.util.Arrays;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
-import static io.debezium.data.Envelope.FieldName.OPERATION;
 
 
 @SpringBootApplication
@@ -34,6 +31,8 @@ public class EmbeddedDebeziumEngineApplication  {
 
 	private static KafkaProducer producer;
 	private static final Logger logger = LoggerFactory.getLogger(EmbeddedDebeziumEngineApplication.class);
+	@Autowired
+	private static DebeziumProperties debeziumProperties;
 
 
 
@@ -47,10 +46,10 @@ public class EmbeddedDebeziumEngineApplication  {
 
 
 		Configuration postgresDebeziumConfig = io.debezium.config.Configuration.create()
-				.with("name", "postgres-inventory-connector")
-				.with("bootstrap.servers","localhost:9092")
-				.with("connector.class", "io.debezium.connector.postgresql.PostgresConnector")
-				.with("offset.storage", "org.apache.kafka.connect.storage.KafkaOffsetBackingStore")
+				.with("name", debeziumProperties.getName())
+				.with("bootstrap.servers",debeziumProperties.getBootstrapServers())
+				.with("connector.class", debeziumProperties.getConnectorClass())
+				.with("offset.storage", debeziumProperties.getOffset())
 				.with("offset.storage.topic", "debezium_tutorial_lsn")
 				.with("offset.storage.partitions", "1")
 				.with("offset.storage.replication.factor", "1")
@@ -64,13 +63,13 @@ public class EmbeddedDebeziumEngineApplication  {
 				.with("table.include.list", "inventory.product")
 				.with("slot.name","debezium_replication")
 				.with("plugin.name","pgoutput")
-				.with("snapshot.mode","always")
+				.with("snapshot.mode","initial")
 				.build();
 
-
+		PostgresEventHandler changeEventProcessor = new PostgresEventHandler(properties);
 		debeziumEngine = DebeziumEngine.create(ChangeEventFormat.of(Connect.class))
 				.using(postgresDebeziumConfig.asProperties())
-				.notifying(EmbeddedDebeziumEngineApplication::handleChangeEvent)
+				.notifying(changeEventProcessor::handleChangeEvent)
 				.build();
 
 
@@ -83,16 +82,7 @@ public class EmbeddedDebeziumEngineApplication  {
 
 	}
 
-	private static void handleChangeEvent(RecordChangeEvent<SourceRecord> sourceRecordRecordChangeEvent) {
-		SourceRecord sourceRecord = sourceRecordRecordChangeEvent.record();
-		Struct sourceRecordChangeValue= (Struct) sourceRecord.value();
 
-		if (sourceRecordChangeValue != null) {
-			Envelope.Operation operation = Envelope.Operation.forCode((String) sourceRecordChangeValue.get(OPERATION));
-
-
-		}
-	}
 }
 
 

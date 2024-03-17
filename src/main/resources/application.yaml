@@ -1,4 +1,29 @@
 # application.yaml
+debezium:
+  name: postgres-inventory-connector
+  bootstrap-servers: localhost:9092
+  connector-class: io.debezium.connector.postgresql.PostgresConnector
+  offset:
+    storage: org.apache.kafka.connect.storage.KafkaOffsetBackingStore
+    topic: debezium_tutorial_lsn
+    partitions: 1
+    replication-factor: 1
+    flush-interval-ms: 6000
+  database:
+    hostname: localhost
+    port: 5432
+    user: debezium_user
+    password: debezium_pw
+    dbname: debezium_tutorial
+  topic-prefix: inventory
+  table:
+    include-list: inventory.product
+  slot:
+    name: debezium_replication
+  plugin:
+    name: pgoutput
+  snapshot:
+    mode: initial
 
 # Server configurations
 server:
