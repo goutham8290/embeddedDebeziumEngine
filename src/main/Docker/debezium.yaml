@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  # PostgreSQL service
+  postgres:
+    image: postgres:latest
+    container_name: my-postgres-container
+    environment:
+      POSTGRES_DB: debezium_tutorial
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data
+
+  # Apache Kafka service using Confluent version
+  kafka:
+    image: confluentinc/cp-kafka:6.2.1
+    container_name: my-kafka-container
+    environment:
+      KAFKA_ADVERTISED_LISTENERS: INSIDE://kafka:9093,OUTSIDE://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INSIDE:PLAINTEXT,OUTSIDE:PLAINTEXT
+      KAFKA_LISTENERS: INSIDE://0.0.0.0:9093,OUTSIDE://0.0.0.0:9092
+      KAFKA_INTER_BROKER_LISTENER_NAME: INSIDE
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_CONFLUENT_SUPPORT_METRICS_ENABLE: "false"
+    ports:
+      - "9092:9092"
+    volumes:
+      - ./kafka-data:/var/lib/kafka/data
+    depends_on:
+      - zookeeper
+
+  # Zookeeper service required for Kafka
+  zookeeper:
+    image: wurstmeister/zookeeper:3.4.6
+    container_name: my-zookeeper-container
+    ports:
+      - "2181:2181"
+
+  # kafdrop service required for kafka ui
+  kafdrop:
+    image: obsidiandynamics/kafdrop:latest
+    container_name: my-kafdrop-container
+    environment:
+      KAFKA_BROKERCONNECT: kafka:9093
+      JVM_OPTS: "-Xms32M -Xmx64M"
+    ports:
+      - "9000:9000"
+    depends_on:
+      - kafka
