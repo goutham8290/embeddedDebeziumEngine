@@ -43,25 +43,23 @@ public class EmbeddedDebeziumEngineApplication  {
 		properties.setProperty(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
 		properties.setProperty(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
 
-
-
 		Configuration postgresDebeziumConfig = io.debezium.config.Configuration.create()
-				.with("name", debeziumProperties.getName())
-				.with("bootstrap.servers",debeziumProperties.getBootstrapServers())
-				.with("connector.class", debeziumProperties.getConnectorClass())
-				.with("offset.storage", debeziumProperties.getOffset())
-				.with("offset.storage.topic", "debezium_tutorial_lsn")
+				.with("name", "postgres-inventory-connector")
+				.with("bootstrap.servers","localhost:9092")
+				.with("connector.class", "io.debezium.connector.postgresql.PostgresConnector")
+				.with("offset.storage", "org.apache.kafka.connect.storage.KafkaOffsetBackingStore")
+				.with("offset.storage.topic", "debezium_bookstore_lsn")
 				.with("offset.storage.partitions", "1")
 				.with("offset.storage.replication.factor", "1")
 				.with("offset.flush.interval.ms","6000")
 				.with("database.hostname", "localhost")
 				.with("database.port", "5432")
-				.with("database.user", "debezium_user")
-				.with("database.password", "debezium_pw")
-				.with("database.dbname", "debezium_tutorial")
-				.with("topic.prefix", "inventory")
-				.with("table.include.list", "inventory.product")
-				.with("slot.name","debezium_replication")
+				.with("database.user", "myuser")
+				.with("database.password", "mypassword")
+				.with("database.dbname", "book_store")
+				.with("topic.prefix", "book_store")
+				.with("table.include.list", "book_store.book_inventory")
+				.with("slot.name","bookstore_replication")
 				.with("plugin.name","pgoutput")
 				.with("snapshot.mode","initial")
 				.build();
@@ -72,14 +70,10 @@ public class EmbeddedDebeziumEngineApplication  {
 				.notifying(changeEventProcessor::handleChangeEvent)
 				.build();
 
-
-
 		executorService = Executors.newSingleThreadExecutor();
 		executorService.execute(debeziumEngine);
-
 		// Start the Debezium engine
 		debeziumEngine.run();
-
 	}
 
 

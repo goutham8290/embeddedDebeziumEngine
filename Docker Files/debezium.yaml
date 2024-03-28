@@ -6,13 +6,15 @@ services:
     image: postgres:latest
     container_name: my-postgres-container
     environment:
-      POSTGRES_DB: debezium_tutorial
+      POSTGRES_DB: book_store
       POSTGRES_USER: myuser
       POSTGRES_PASSWORD: mypassword
     ports:
       - "5432:5432"
     volumes:
       - ./postgres-data:/var/lib/postgresql/data
+      - ./custom-postgresql.conf:/etc/postgresql/postgresql.conf
+    command: ["postgres", "-c", "config_file=/etc/postgresql/postgresql.conf"]
 
   # Apache Kafka service using Confluent version
   kafka:
